@@ -13454,7 +13454,16 @@ define("tinymce/dom/Selection", [
 						if (rng.startContainer.hasChildNodes()) {
 							node = rng.startContainer.childNodes[rng.startOffset];
 							if (node && node.tagName == 'IMG') {
-								self.getSel().setBaseAndExtent(node, 0, node, 1);
+								try {
+									sel.setBaseAndExtent(
+										rng.startContainer,
+										rng.startOffset,
+										rng.endContainer,
+										rng.endOffset
+									);
+								} catch (ex) {
+									sel.setBaseAndExtent(node, 0, node, 1);
+								}
 							}
 						}
 					}
@@ -26248,21 +26257,20 @@ define("tinymce/util/Quirks", [
 		 */
 		function selectControlElements() {
 			editor.on('click', function(e) {
-				var target = e.target;
+        var target = e.target;
 
-				// Workaround for bug, http://bugs.webkit.org/show_bug.cgi?id=12250
-				// WebKit can't even do simple things like selecting an image
-				// Needs to be the setBaseAndExtend or it will fail to select floated images
-				if (/^(IMG|HR)$/.test(target.nodeName)) {
-					e.preventDefault();
-					selection.getSel().setBaseAndExtent(target, 0, target, 1);
-					editor.nodeChanged();
-				}
+        // Workaround for bug, http://bugs.webkit.org/show_bug.cgi?id=12250
+        // WebKit can't even do simple things like selecting an image
+        if (/^(IMG|HR)$/.test(target.nodeName) && dom.getContentEditableParent(target) !== "false") {
+          e.preventDefault();
+          selection.select(target);
+          editor.nodeChanged();
+        }
 
-				if (target.nodeName == 'A' && dom.hasClass(target, 'mce-item-anchor')) {
-					e.preventDefault();
-					selection.select(target);
-				}
+        if (target.nodeName == 'A' && dom.hasClass(target, 'mce-item-anchor')) {
+          e.preventDefault();
+          selection.select(target);
+        }
 			});
 		}
 
